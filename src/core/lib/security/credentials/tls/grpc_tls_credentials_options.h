@@ -27,6 +27,23 @@
 #include "src/core/lib/gprpp/ref_counted.h"
 #include "src/core/lib/security/security_connector/ssl_utils.h"
 
+struct grpc_tls_err_details
+    : public grpc_core::RefCounted<grpc_tls_err_details> {
+ public:
+
+  void set_err_details(const char* err_details) {
+    error_msg_ = gpr_strdup(err_details);
+  }
+  std::string err_details() {
+    return error_msg_;
+  }
+  bool has_error() {
+    return error_msg_.empty();
+  }
+ private:
+  std::string error_msg_;
+};
+
 /** TLS key materials config. **/
 struct grpc_tls_key_materials_config
     : public grpc_core::RefCounted<grpc_tls_key_materials_config> {
@@ -93,8 +110,7 @@ struct grpc_tls_credential_reload_config
       gpr_log(GPR_ERROR, "schedule API is nullptr");
       if (arg != nullptr) {
         arg->status = GRPC_SSL_CERTIFICATE_CONFIG_RELOAD_FAIL;
-        arg->error_details =
-            gpr_strdup("schedule API in credential reload config is nullptr");
+        arg->error_details->set_err_details("schedule API in credential reload config is nullptr");
       }
       return 1;
     }
@@ -108,8 +124,7 @@ struct grpc_tls_credential_reload_config
       gpr_log(GPR_ERROR, "cancel API is nullptr.");
       if (arg != nullptr) {
         arg->status = GRPC_SSL_CERTIFICATE_CONFIG_RELOAD_FAIL;
-        arg->error_details =
-            gpr_strdup("cancel API in credential reload config is nullptr");
+        arg->error_details->set_err_details("cancel API in credential reload config is nullptr");
       }
       return;
     }
@@ -169,7 +184,7 @@ struct grpc_tls_server_authorization_check_config
       gpr_log(GPR_ERROR, "schedule API is nullptr");
       if (arg != nullptr) {
         arg->status = GRPC_STATUS_NOT_FOUND;
-        arg->error_details = gpr_strdup(
+        arg->error_details->set_err_details(
             "schedule API in server authorization check config is nullptr");
       }
       return 1;
@@ -185,7 +200,7 @@ struct grpc_tls_server_authorization_check_config
       gpr_log(GPR_ERROR, "cancel API is nullptr.");
       if (arg != nullptr) {
         arg->status = GRPC_STATUS_NOT_FOUND;
-        arg->error_details = gpr_strdup(
+        arg->error_details->set_err_details(
             "schedule API in server authorization check config is nullptr");
       }
       return;
